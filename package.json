@@ -1,0 +1,28 @@
+{
+  "name": "datavis-projekt2",
+  "version": "1.0.0",
+  "description": "Visualisering av crypto växelkurser",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/penttinj/datavis-projekt2.git"
+  },
+  "author": "Kristoffer, Johan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/penttinj/datavis-projekt2/issues"
+  },
+  "homepage": "https://github.com/penttinj/datavis-projekt2#readme",
+  "devDependencies": {
+    "d3": "^5.16.0",
+    "gulp": "^3.9.1",
+    "gulp-cli": "^2.2.0",
+    "gulp-sourcemaps": "^2.6.5",
+    "gulp-util": "^3.0.8",
+    "gulp-webserver": "^0.9.1"
+  },
+  "dependencies": {}
+}
