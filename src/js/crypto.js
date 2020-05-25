@@ -5,13 +5,16 @@ window.addEventListener("resize", (e) => {
 let processedData = [];
 
 function handleSubmit(e) {
-  let startDate = new Date(),
-    endDate,
+  // dates här ska vara typ från kalendern
+  let startDate = new Date("January 31 2020 00:00"),
+    endDate = new Date("February 2 2020 12:30"),
     timeResolution,
     fsym;
 
+  console.log("startDate: ", startDate.toDateString());
+
   checkInput();
-  makeApiCall();
+  makeApiCall("daily", "timestamp", 839, "btc");
 
 }
 
@@ -23,7 +26,8 @@ function checkInput() {
 
 function makeApiCall(timeResolution, timestamp, limit, fsym) {
   const apiKey = "ff8354bade31f78b01ddb5634247dc8f671875fd393a98fe2ee9306df95cd080";
-  d3.json(`https://min-api.cryptocompare.com/data/v2/histohour?fsym=BTC&tsym=USD&limit=95&aggregate=1&api_key=${apiKey}`).then((json) => {
+  const apiType = (timeResolution == "weekly") ? "histoday" : "histohour";
+  d3.json(`https://min-api.cryptocompare.com/data/v2/${apiType}?fsym=${fsym}&tsym=eur&limit=${limit}&aggregate=1&api_key=${apiKey}`).then((json) => {
     processData(json, timeResolution);
     drawCanvas();
   });
@@ -33,14 +37,19 @@ function makeApiCall(timeResolution, timestamp, limit, fsym) {
 function processData(json, timeResolution) {
   const data = json.Data.Data;
   let dataPointRange = 24; // placeholder value until the UI works
+
   switch (timeResolution) {
     case "hourly":
       dataPointRange = 60;
+      break;
     case "daily":
       dataPointRange = 24;
+      break;
     case "weekly":
       dataPointRange = 7;
+      break;
   }
+  
   // Processa datan
   for (let i = 0; i < data.length; i += dataPointRange) {
     const day = data.slice(i, i + dataPointRange),
@@ -55,7 +64,6 @@ function processData(json, timeResolution) {
       open = day[0].open,
       close = day[day.length - 1].close;
 
-    console.log("endDate.getDay", endDate.toDateString());
     processedData.push({
       lq, median, uq, min, max, startDate, endDate, open, close
     });
@@ -66,10 +74,10 @@ function processData(json, timeResolution) {
 
 
 function drawCanvas() {
-  const margin = { top: 10, right: 30, bottom: 30, left: 40 },
+  const margin = { top: 10, right: 30, bottom: 100, left: 40 },
     width = (window.innerWidth / 1.5) - margin.left - margin.right,
     height = (window.innerHeight / 1.5) - margin.top - margin.bottom;
-  const boxWidth = 100;
+  const boxWidth = width / processedData.length - 5;
 
   // Ta bort föregående SVG om finns
   d3.select("svg").remove();
@@ -105,6 +113,14 @@ function drawCanvas() {
   const xAxis = chartGroup.append("g")
     .attr("transform", "translate(0," + height + ")")
     .call(d3.axisBottom(xScale))
+    .selectAll("text")
+    .attr("y", 7)
+    .attr("x", 5)
+    .attr("dy", ".35em")
+    .attr("transform", "rotate(40)")
+    .style("text-anchor", "start")
+    .html((d) => d.slice(4));
+
   // Visar y axis
   chartGroup.append("g").call(d3.axisLeft(yScale));
 
@@ -119,12 +135,8 @@ function drawCanvas() {
     .attr("x2", function (d, i) { return (xScale(d.startDate.toDateString())) })
     .attr("y1", function (d) { return (yScale(d.min)) })
     .attr("y2", function (d) { return (yScale(d.max)) })
-    .attr("stroke", (d, i) => {
-      console.log("d", d)
-      console.log("i[this]", processedData[i]);
-      return greenOrRed(i)
-    })
-    .style("width", 40)
+    .attr("stroke", (d, i) => greenOrRed(d))
+    .style("width", 40);
 
   chartGroup
     .selectAll("boxes")
@@ -136,7 +148,7 @@ function drawCanvas() {
     .attr("height", function (d) { return (yScale(d.lq) - yScale(d.uq)) })
     .attr("width", boxWidth)
     .attr("stroke", "black")
-    .style("fill", "#69b3a2")
+    .style("fill", (d, i) => greenOrRed(d));
 
   // Show the median
   chartGroup
@@ -152,15 +164,9 @@ function drawCanvas() {
     .style("width", 80);
 
 
-  function greenOrRed(i) {
-    try {
-      if (processedData[i].close > processedData[i - 1].close) return "green"
-      else return "red"
-    } catch (e) {
-      return "black"
-    }
-
-
+  function greenOrRed(d) {
+    if (d.close > d.open) return "green"
+    else return "red"
   }
 }
 
