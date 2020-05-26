@@ -116,12 +116,8 @@ function checkAPIrequest(selection) {
     console.log("Range choosen: " + range);
     console.log("api is " + checkAPI);
     if (checkAPI) {
-        const corrections = {
-            "86400": 6,
-            "3600": 23,
-            "60": 59
-        }
-        const max = (Math.max.apply(null, timeStamps)) + 86399000; // Lägger till 23h59m59s
+        const correction = (range == 60) ? 0 : 86399000;
+        const max = Math.max.apply(null, timeStamps) + correction; // Lägger till 23h59m59s om daily
         const min = Math.min.apply(null, timeStamps);
         const timeStamp = max - min;
         const limit = Math.floor(timeStamp / (1000 * range)); // Annars blir det x.99999...
