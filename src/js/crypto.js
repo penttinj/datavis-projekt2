@@ -13,8 +13,6 @@ function handleSubmit(e) {
     timeResolution,
     fsym;
 
-  console.log("startDate: ", startDate.toDateString());
-
   checkInput();
   makeApiCall("daily", "timestamp", 839, "btc");
 
@@ -28,8 +26,8 @@ function checkInput() {
 
 function makeApiCall(timeResolution, timestamp, limit, fsym) {
   const apiKey = "ff8354bade31f78b01ddb5634247dc8f671875fd393a98fe2ee9306df95cd080";
-  const apiType = (timeResolution == "weekly") ? "histoday" : "histohour";
-  d3.json(`https://min-api.cryptocompare.com/data/v2/${apiType}?fsym=${fsym}&tsym=eur&limit=${limit}&aggregate=1&api_key=${apiKey}`).then((json) => {
+  const apiType = (timeResolution == "Weekly") ? "histoday" : "histohour";
+  d3.json(`https://min-api.cryptocompare.com/data/v2/${apiType}?fsym=${fsym}&tsym=eur&limit=${limit}&toTs=${timestamp / 1000}&aggregate=1&api_key=${apiKey}`).then((json) => {
     processData(json, timeResolution);
     drawCanvas();
   });
@@ -61,11 +59,10 @@ function processData(json, timeResolution) {
       uq = d3.quantile(highs, .75),
       min = d3.min(highs),
       max = d3.max(highs),
-      startDate = new Date(day[0].time * 1000),
-      endDate = new Date(day[day.length - 1].time * 1000),
+      startDate = new Date((day[0].time * 1000)),
+      endDate = new Date((day[day.length - 1].time * 1000)),
       open = day[0].open,
       close = day[day.length - 1].close;
-
     processedData.push({
       lq, median, uq, min, max, startDate, endDate, open, close
     });
