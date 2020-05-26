@@ -115,15 +115,21 @@ function checkAPIrequest(selection) {
     console.log("Range choosen: " + range);
     console.log("api is " + checkAPI);
     if (checkAPI) {
+        const corrections = {
+          "86400": 6,
+          "3600": 23,
+          "60": 59
+        }
         const max = Math.max.apply(null, timeStamps);
         const min = Math.min.apply(null, timeStamps);
         const timeStamp = max - min;
-        const limit = timeStamp / (1000 * range);
+        const limit = timeStamp / (1000 * range) + corrections[range];
         console.log("timeresolution: "+ selection.options[selection.selectedIndex].text)
         console.log("timestamp: " + timeStamp);
         console.log("limit: " + limit);
         console.log("fsym: "+"btc");
 
-        makeApiCall(selection.options[selection.selectedIndex].text, max, limit, "btc");
+        //makeApiCall(selection.options[selection.selectedIndex].text, max, limit, "btc");
+        makeApiCall("Hourly", max, limit, "btc");
     }
 }

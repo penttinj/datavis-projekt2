@@ -26,8 +26,13 @@ function checkInput() {
 
 function makeApiCall(timeResolution, timestamp, limit, fsym) {
   const apiKey = "ff8354bade31f78b01ddb5634247dc8f671875fd393a98fe2ee9306df95cd080";
-  const apiType = (timeResolution == "Weekly") ? "histoday" : "histohour";
-  d3.json(`https://min-api.cryptocompare.com/data/v2/${apiType}?fsym=${fsym}&tsym=eur&limit=${limit}&toTs=${timestamp / 1000}&aggregate=1&api_key=${apiKey}`).then((json) => {
+  const apiType = {
+    "Weekly": "histoday",
+    "Daily": "histohour",
+    "Hourly": "histominute"
+  }
+
+  d3.json(`https://min-api.cryptocompare.com/data/v2/${apiType[timeResolution]}?fsym=${fsym}&tsym=eur&limit=${limit}&toTs=${timestamp / 1000}&aggregate=1&api_key=${apiKey}`).then((json) => {
     processData(json, timeResolution);
     drawCanvas();
   });
@@ -35,21 +40,22 @@ function makeApiCall(timeResolution, timestamp, limit, fsym) {
 }
 
 function processData(json, timeResolution) {
+  // töm föregående data
+  processedData = [];
   const data = json.Data.Data;
-  let dataPointRange = 24; // placeholder value until the UI works
 
   switch (timeResolution) {
-    case "hourly":
+    case "Hourly":
       dataPointRange = 60;
       break;
-    case "daily":
+    case "Daily":
       dataPointRange = 24;
       break;
-    case "weekly":
+    case "Weekly":
       dataPointRange = 7;
       break;
   }
-  
+
   // Processa datan
   for (let i = 0; i < data.length; i += dataPointRange) {
     const day = data.slice(i, i + dataPointRange),
@@ -61,6 +67,7 @@ function processData(json, timeResolution) {
       max = d3.max(highs),
       startDate = new Date((day[0].time * 1000)),
       endDate = new Date((day[day.length - 1].time * 1000)),
+      xTime = startDate.getHours();
       open = day[0].open,
       close = day[day.length - 1].close;
     processedData.push({
