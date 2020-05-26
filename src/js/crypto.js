@@ -49,7 +49,7 @@ function processData(json, timeResolution) {
       dataPointRange = 7;
       break;
   }
-  
+
   // Processa datan
   for (let i = 0; i < data.length; i += dataPointRange) {
     const day = data.slice(i, i + dataPointRange),
@@ -103,10 +103,15 @@ function drawCanvas() {
     .paddingInner(1)
     .paddingOuter(.5)
 
+  const xScaleMedian = d3.scaleLinear()
+    .range([0, width])
+    .domain([0,processedData.length]);
+
   const chartGroup = svg
     .append("g")
     .attr("transform",
       "translate(" + margin.left + "," + margin.top + ")");
+
 
   // Visar x axis
   const xAxis = chartGroup.append("g")
@@ -161,6 +166,21 @@ function drawCanvas() {
     .attr("y2", function (d) { return (yScale(d.median)) })
     .attr("stroke", "black")
     .style("width", 80);
+
+  // Draw a line based on median
+  const path = d3.line()
+    .x((d, i) => {return xScaleMedian(i)})
+    .y((d, i) => {return yScale(d.median)})
+    .curve(d3.curveCardinal);
+
+    console.log("Print dafuq: "+processedData[1].median);
+  var lineMedian = chartGroup.append("g").attr("class", "lineMedian");
+  lineMedian
+    .append("path")
+    .attr("stroke", "cyan")
+    .attr("fill", "none")
+    .attr("d", path(processedData));
+
 
 
   function greenOrRed(d) {
