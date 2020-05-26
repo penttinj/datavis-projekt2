@@ -8,7 +8,6 @@ function makeRangeSelect() {
     const select = document.createElement("select");
     select.id = "apiRangeButton";
     const body = document.getElementsByTagName("BODY")[0];
-    //body.insertBefore(select, body.firstChild); // Top of body
     body.appendChild(select);
     let option = document.createElement("option");
     option.disabled = true;
@@ -41,37 +40,52 @@ function makeCalendars(selection) {
     document.getElementById("submitDates").addEventListener("click", () => checkAPIrequest(selection));
 }
 
-function updateCalendars(target, range) {
+function updateCalendars(target, selection) {
     let date = new Date(target.value);
     const dateLimits = {
         "Weekly": 7,
         "Daily": 1,
         "Hourly": 24 * 60 * 60 * 1000
     };
-    if (target.id == "startCalendar") {
-        // If range is Hourly it puts the "disabled" endCalendar to 24h (in milisec) ahead of current value
-        if (range == "Hourly") {
-            date.setTime(date.getTime() + dateLimits[range]);
-            document.getElementById("endCalendar").value = new Date(date).toISOString().split("T")[0];
-        } else {
-            date.setDate(date.getDate() + dateLimits[range]);
-            document.getElementById("endCalendar").min = new Date(date).toISOString().split("T")[0];
-        }
-    } else if (target.id == "endCalendar") {
-        date.setDate(date.getDate() - dateLimits[range]);
-        document.getElementById("startCalendar").max = new Date(date).toISOString().split("T")[0];
+    console.log("as date: " + target.valueAsDate);
+    console.log("as number: " + target.valueAsNumber);
+    if (selection == "Hourly") {
+        date.setTime(date.getTime() + dateLimits[selection]);
+        document.getElementById("endCalendar").value = new Date(date).toISOString().split("T")[0];
     }
 }
 
-function constructCalendar(id, range) {
-    var calendar = document.createElement("input");
-    calendar.setAttribute("type", "date");
+function constructCalendar(id, selection) {
+    const calendar = document.createElement("input");
+    if (selection == "Weekly") {
+        let result = getWeekNumber(new Date());
+        calendar.setAttribute("type", "week");
+        console.log("resault: " + result[0] + "-W" + result[1]);
+        calendar.max = result[0] + "-W" + result[1];
+    } else {
+        let date = new Date();
+        date.setHours(0, 0, 0, 0);    //Midnatt
+        calendar.setAttribute("type", "date");
+        calendar.max = new Date(date).toISOString().split("T")[0];
+    }
     calendar.setAttribute("id", id);
-    var date = new Date();
-    date.setHours(0, 0, 0, 0);    //Midnatt
-    calendar.max = new Date(date).toISOString().split("T")[0];
-    calendar.addEventListener("change", (e) => updateCalendars(e.target, range));
+    calendar.addEventListener("change", (e) => updateCalendars(e.target, selection));
     divAppend(calendar);
+}
+
+// From: https://stackoverflow.com/questions/6117814/get-week-of-year-in-javascript-like-in-php
+function getWeekNumber(d) {
+    // Copy date so don't modify original
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    // Set to nearest Thursday: current date + 4 - current day number
+    // Make Sunday's day number 7
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    // Get first day of year
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    // Calculate full weeks to nearest Thursday
+    var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    // Return array of year and week number
+    return [d.getUTCFullYear(), weekNo];
 }
 
 function constructSimpleButton(id, label) {
@@ -99,13 +113,25 @@ function clearCalendars() {
 
 function checkAPIrequest(selection) {
     const range = selection.value
-    let checkAPI = true;
-    let timeStamps = [];
-    const calendars = document.querySelectorAll("input[type=date]");
+    const select = selection.options[selection.selectedIndex].text;
+    let checkAPI = true;    // Turn false on problems
+    let timeStamp;          // The final timestamp for api call
+    let timeStamps = [];    // Push calendars value here
+    let type = "";          // calendar type
+    if (select == "Weekly") {
+        type = "week";
+    } else {
+        type = "date";
+    }
+    const calendars = document.querySelectorAll("input[type=" + type + "]");
     for (let i = 0; i < calendars.length; i++) {
-        if (calendars[i].value) {
-            const date = new Date(calendars[i].value);
-            console.log(calendars[i].id + ": " + date.getTime());
+        if (calendars[i].value || calendars[i].valueAsNumber) {
+            let date;
+            if (type == "week") {
+                date = new Date(calendars[i].valueAsNumber);
+            } else {
+                date = new Date(calendars[i].value);
+            }
             timeStamps.push(date.getTime());
         } else {
             console.log("A value was empty");
@@ -113,16 +139,21 @@ function checkAPIrequest(selection) {
         }
     }
     console.log("Range choosen: " + range);
-    console.log("api is " + checkAPI);
     if (checkAPI) {
         const max = Math.max.apply(null, timeStamps);
         const min = Math.min.apply(null, timeStamps);
-        const timeStamp = max - min;
-        const limit = timeStamp / (1000 * range);
-        console.log("timeresolution: "+ selection.options[selection.selectedIndex].text)
-        console.log("timestamp: " + timeStamp);
+        if (!max || !min) {
+            checkAPI = false;
+        }
+        timeStamp = max;
+        if (type == "week") {
+            timeStamp += 1000 * 60 * 60 * 24 * 7; // Moves pointer to end of week
+        }
+        const limit = (max - min) / (1000 * range);
+        console.log("timeresolution: " + select)
+        console.log("timestamp: " + max);
         console.log("limit: " + limit);
-        console.log("fsym: "+"btc");
+        console.log("fsym: " + "btc");
 
         makeApiCall(selection.options[selection.selectedIndex].text, timeStamp, limit, "btc");
     }
