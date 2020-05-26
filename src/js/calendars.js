@@ -1,10 +1,10 @@
 function makeRangeSelect() {
     const selectOptions = {
-      "Weekly": 24 * 60 * 60,
-      "Daily": 60 * 60,
-      "Hourly": 60 * 60
+        "Weekly": 24 * 60 * 60,
+        "Daily": 60 * 60,
+        "Hourly": 60
     };
-  
+
     const select = document.createElement("select");
     select.id = "apiRangeButton";
     const body = document.getElementsByTagName("BODY")[0];
@@ -17,53 +17,53 @@ function makeRangeSelect() {
     option.text = "Please select a range";
     select.appendChild(option);
     Object.keys(selectOptions).forEach(key => {
-      option = document.createElement("option");
-      option.value = selectOptions[key];
-      option.text = key;
-      select.appendChild(option);
+        option = document.createElement("option");
+        option.value = selectOptions[key];
+        option.text = key;
+        select.appendChild(option);
     });
     select.addEventListener("change", function (e) {
-      console.log("Range set to: " + e.target.options[e.target.selectedIndex].text);
-      makeCalendars(e.target);
+        console.log("Range set to: " + e.target.options[e.target.selectedIndex].text);
+        makeCalendars(e.target);
     });
-  }
-  
-  function makeCalendars(selection) {
+}
+
+function makeCalendars(selection) {
     document.getElementById("api_selections").innerHTML = "";
     constructCalendar("startCalendar", selection.options[selection.selectedIndex].text);
     constructCalendar("endCalendar", selection.options[selection.selectedIndex].text);
     if (selection.options[selection.selectedIndex].text == "Hourly") {
-      document.getElementById("endCalendar").disabled = true;
+        document.getElementById("endCalendar").disabled = true;
     }
     constructSimpleButton("clearDates", "Clear");
     constructSimpleButton("submitDates", "Submit");
     document.getElementById("clearDates").addEventListener("click", () => clearCalendars());
-    document.getElementById("submitDates").addEventListener("click", () => checkAPIrequest(selection.value));
-  }
-  
-  function updateCalendars(target, range) {
+    document.getElementById("submitDates").addEventListener("click", () => checkAPIrequest(selection));
+}
+
+function updateCalendars(target, range) {
     let date = new Date(target.value);
     const dateLimits = {
-      "Weekly": 7,
-      "Daily": 1,
-      "Hourly": 24 * 60 * 60 * 1000
+        "Weekly": 7,
+        "Daily": 1,
+        "Hourly": 24 * 60 * 60 * 1000
     };
     if (target.id == "startCalendar") {
-      // If range is Hourly it puts the "disabled" endCalendar to 24h (in milisec) ahead of current value
-      if (range == "Hourly") {
-        date.setTime(date.getTime() + dateLimits[range]);
-        document.getElementById("endCalendar").value = new Date(date).toISOString().split("T")[0];
-      } else {
-        date.setDate(date.getDate() + dateLimits[range]);
-        document.getElementById("endCalendar").min = new Date(date).toISOString().split("T")[0];
-      }
+        // If range is Hourly it puts the "disabled" endCalendar to 24h (in milisec) ahead of current value
+        if (range == "Hourly") {
+            date.setTime(date.getTime() + dateLimits[range]);
+            document.getElementById("endCalendar").value = new Date(date).toISOString().split("T")[0];
+        } else {
+            date.setDate(date.getDate() + dateLimits[range]);
+            document.getElementById("endCalendar").min = new Date(date).toISOString().split("T")[0];
+        }
     } else if (target.id == "endCalendar") {
-      date.setDate(date.getDate() - dateLimits[range]);
-      document.getElementById("startCalendar").max = new Date(date).toISOString().split("T")[0];
+        date.setDate(date.getDate() - dateLimits[range]);
+        document.getElementById("startCalendar").max = new Date(date).toISOString().split("T")[0];
     }
-  }
-  
-  function constructCalendar(id, range) {
+}
+
+function constructCalendar(id, range) {
     var calendar = document.createElement("input");
     calendar.setAttribute("type", "date");
     calendar.setAttribute("id", id);
@@ -72,58 +72,58 @@ function makeRangeSelect() {
     calendar.max = new Date(date).toISOString().split("T")[0];
     calendar.addEventListener("change", (e) => updateCalendars(e.target, range));
     divAppend(calendar);
-  }
-  
-  function constructSimpleButton(id, label) {
+}
+
+function constructSimpleButton(id, label) {
     var button = document.createElement("button");
     button.setAttribute("id", id);
     button.innerHTML = label;
     divAppend(button);
-  }
-  
-  function divAppend(e) {
+}
+
+function divAppend(e) {
     document.getElementById("api_selections").appendChild(e);
-  }
-  
-  function clearCalendars() {
+}
+
+function clearCalendars() {
     var calendars = document.querySelectorAll("input[type=date]");
     calendars.forEach(element => {
-      element.value = "";
-      var date = new Date();
-      date.setHours(0, 0, 0, 0);    //Midnatt
-      element.max = new Date(date).toISOString().split("T")[0];
-      element.min = null;
+        element.value = "";
+        var date = new Date();
+        date.setHours(0, 0, 0, 0);    //Midnatt
+        element.max = new Date(date).toISOString().split("T")[0];
+        element.min = null;
     });
-  }
-  
-  
-  function checkAPIrequest(range) {
-    let goodAPIboi = true;
-    let DASARRAY = [];
+}
+
+
+function checkAPIrequest(selection) {
+    const range = selection.value
+    let checkAPI = true;
+    let timeStamps = [];
     const calendars = document.querySelectorAll("input[type=date]");
     for (let i = 0; i < calendars.length; i++) {
-      if (calendars[i].value) {
-        const date = new Date(calendars[i].value);
-        console.log(calendars[i].id + ": " + date.getTime());
-        DASARRAY.push(date.getTime());
-      } else {
-        console.log("A value was empty");
-        goodAPIboi = false;
-      }
+        if (calendars[i].value) {
+            const date = new Date(calendars[i].value);
+            console.log(calendars[i].id + ": " + date.getTime());
+            timeStamps.push(date.getTime());
+        } else {
+            console.log("A value was empty");
+            checkAPI = false;
+        }
     }
     console.log("Range choosen: " + range);
-    console.log("goodboi is " + goodAPIboi);
-    if (goodAPIboi) {
-      const max = Math.max.apply(null, DASARRAY);
-      const min = Math.min.apply(null, DASARRAY);
-      console.log("max: " + max);
-      console.log("min: " + min);
-      const timeStamp = max-min;
-      console.log("DAS LIMIT WITHOUT RANGE: " + timeStamp);
-      const limit = timeStamp / (1000*range);
-      console.log("DAS REAL LIMIT: " + limit);
-  
-      // vafan den är inne i drawCanvas! :D :D :D
-      makeApiCall(range, timeStamp, limit, "btc");
+    console.log("api is " + checkAPI);
+    if (checkAPI) {
+        const max = Math.max.apply(null, timeStamps);
+        const min = Math.min.apply(null, timeStamps);
+        const timeStamp = max - min;
+        const limit = timeStamp / (1000 * range);
+        console.log("timeresolution: "+ selection.options[selection.selectedIndex].text)
+        console.log("timestamp: " + timeStamp);
+        console.log("limit: " + limit);
+        console.log("fsym: "+"btc");
+
+        makeApiCall(selection.options[selection.selectedIndex].text, timeStamp, limit, "btc");
     }
-  }
+}
