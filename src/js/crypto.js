@@ -1,6 +1,7 @@
 window.addEventListener("resize", (e) => {
-
-  drawCanvas();
+  if (isDrawn) {
+    drawCanvas();
+  }
 })
 
 let processedData = [];
@@ -105,7 +106,7 @@ function drawCanvas() {
 
   const xScaleMedian = d3.scaleLinear()
     .range([0, width])
-    .domain([0,processedData.length]);
+    .domain([0, processedData.length]);
 
   const chartGroup = svg
     .append("g")
@@ -115,6 +116,7 @@ function drawCanvas() {
 
   // Visar x axis
   const xAxis = chartGroup.append("g")
+    .attr("class","axis x")
     .attr("transform", "translate(0," + height + ")")
     .call(d3.axisBottom(xScale))
     .selectAll("text")
@@ -126,11 +128,13 @@ function drawCanvas() {
     .html((d) => d.slice(4));
 
   // Visar y axis
-  chartGroup.append("g").call(d3.axisLeft(yScale));
+  chartGroup.append("g").attr("class","axis y").call(d3.axisLeft(yScale));
 
+  // Grupp för boxplots
+  const boxplots = chartGroup.append("g").attr("class","boxplots");
 
   // Show the main vertical line
-  chartGroup
+  boxplots
     .selectAll("vertLines")
     .data(processedData)
     .enter()
@@ -142,7 +146,7 @@ function drawCanvas() {
     .attr("stroke", (d, i) => greenOrRed(d))
     .style("width", 40);
 
-  chartGroup
+  boxplots
     .selectAll("boxes")
     .data(processedData)
     .enter()
@@ -155,7 +159,7 @@ function drawCanvas() {
     .style("fill", (d, i) => greenOrRed(d));
 
   // Show the median
-  chartGroup
+  boxplots
     .selectAll("medianLines")
     .data(processedData)
     .enter()
@@ -169,25 +173,41 @@ function drawCanvas() {
 
   // Draw a line based on median
   const path = d3.line()
-    .x((d, i) => {return xScaleMedian(i)})
-    .y((d, i) => {return yScale(d.median)})
+    .x((d, i) => { return xScaleMedian(i) })
+    .y((d, i) => { return yScale(d.median) })
     .curve(d3.curveCardinal);
 
-    console.log("Print dafuq: "+processedData[1].median);
-  var lineMedian = chartGroup.append("g").attr("class", "lineMedian");
-  lineMedian
+  var medianPath = chartGroup.append("g").attr("class", "path median");
+  medianPath
     .append("path")
+    .attr("id", "medianPath")
     .attr("stroke", "cyan")
+    .attr("stroke-width", "3")
     .attr("fill", "none")
     .attr("d", path(processedData));
 
+    // make just the 1 button
+  if(!isDrawn){
+    const id = "pathShowHide";
+    constructSimpleButton(id, "Toggle");
+    document.getElementById(id).addEventListener("click", medianShowHide);
+  }
 
-
+  // Set global boolean to true for on.window.resize
+  isDrawn = true;
   function greenOrRed(d) {
     if (d.close > d.open) return "green"
     else return "red"
+  }
 
-    isDrawn = true;
+  function medianShowHide(){
+    const style = document.getElementById("medianPath").style.display;
+    if(style === "none"){
+      document.getElementById("medianPath").style.display = "block";
+    } else{
+      document.getElementById("medianPath").style.display = "none";
+    }
+    
   }
 }
 
