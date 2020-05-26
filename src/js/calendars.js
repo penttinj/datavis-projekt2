@@ -105,31 +105,32 @@ function checkAPIrequest(selection) {
     for (let i = 0; i < calendars.length; i++) {
         if (calendars[i].value) {
             const date = new Date(calendars[i].value);
-            console.log(calendars[i].id + ": " + date.getTime());
+            console.log(calendars[i].id, ": ", date);
             timeStamps.push(date.getTime());
         } else {
             console.log("A value was empty");
             checkAPI = false;
         }
     }
+    console.log("timestamps[1]", timeStamps[1], "as date obj", new Date(timeStamps[1]));
     console.log("Range choosen: " + range);
     console.log("api is " + checkAPI);
     if (checkAPI) {
         const corrections = {
-          "86400": 6,
-          "3600": 23,
-          "60": 59
+            "86400": 6,
+            "3600": 23,
+            "60": 59
         }
-        const max = Math.max.apply(null, timeStamps);
+        const max = (Math.max.apply(null, timeStamps)) + 86399000; // Lägger till 23h59m59s
         const min = Math.min.apply(null, timeStamps);
         const timeStamp = max - min;
-        const limit = timeStamp / (1000 * range) + corrections[range];
-        console.log("timeresolution: "+ selection.options[selection.selectedIndex].text)
+        const limit = Math.floor(timeStamp / (1000 * range)); // Annars blir det x.99999...
+        console.log("1000 * range", (1000 * range));
+        console.log("timeresolution: " + selection.options[selection.selectedIndex].text)
         console.log("timestamp: " + timeStamp);
         console.log("limit: " + limit);
-        console.log("fsym: "+"btc");
+        console.log("fsym: " + "btc");
 
-        //makeApiCall(selection.options[selection.selectedIndex].text, max, limit, "btc");
-        makeApiCall("Hourly", max, limit, "btc");
+        makeApiCall(selection.options[selection.selectedIndex].text, max, limit, "btc");
     }
 }
