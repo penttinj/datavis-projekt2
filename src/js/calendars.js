@@ -155,6 +155,6 @@ function checkAPIrequest(selection) {
         console.log("limit: " + limit);
         console.log("fsym: " + "btc");
 
-        makeApiCall(selection.options[selection.selectedIndex].text, timeStamp, limit, "btc");
+        makeApiCall(selection.options[selection.selectedIndex].text, max, limit, "btc");
     }
 }
