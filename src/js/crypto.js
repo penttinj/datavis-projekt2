@@ -1,8 +1,10 @@
 window.addEventListener("resize", (e) => {
+
   drawCanvas();
 })
 
 let processedData = [];
+let isDrawn = false;
 
 function handleSubmit(e) {
   // dates här ska vara typ från kalendern
@@ -167,7 +169,9 @@ function drawCanvas() {
   function greenOrRed(d) {
     if (d.close > d.open) return "green"
     else return "red"
+
+    isDrawn = true;
   }
 }
 
-handleSubmit();
+makeRangeSelect();
