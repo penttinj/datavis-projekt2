@@ -7,8 +7,7 @@ function makeRangeSelect() {
 
     const select = document.createElement("select");
     select.id = "apiRangeButton";
-    const body = document.getElementsByTagName("BODY")[0];
-    body.appendChild(select);
+    divAppend(select, "selects");
     let option = document.createElement("option");
     option.disabled = true;
     option.selected = true;
@@ -28,7 +27,7 @@ function makeRangeSelect() {
 }
 
 function makeCalendars(selection) {
-    document.getElementById("api_selections").innerHTML = "";
+    document.getElementById("calendarsDiv").innerHTML = "";
     constructCalendar("startCalendar", selection.options[selection.selectedIndex].text);
     constructCalendar("endCalendar", selection.options[selection.selectedIndex].text);
     if (selection.options[selection.selectedIndex].text == "Hourly") {
@@ -54,7 +53,7 @@ function constructCalendar(id, selection) {
         calendar.max = new Date(date).toISOString().split("T")[0];
     }
     calendar.setAttribute("id", id);
-    divAppend(calendar);
+    divAppend(calendar, "calendarsDiv");
 }
 
 // From: https://stackoverflow.com/questions/6117814/get-week-of-year-in-javascript-like-in-php
@@ -76,11 +75,11 @@ function constructSimpleButton(id, label) {
     var button = document.createElement("button");
     button.setAttribute("id", id);
     button.innerHTML = label;
-    divAppend(button);
+    divAppend(button, "buttons");
 }
 
-function divAppend(e) {
-    document.getElementById("api_selections").appendChild(e);
+function divAppend(child, id) {
+    document.getElementById(id).appendChild(child);
 }
 
 function clearCalendars() {
