@@ -7,7 +7,7 @@ function makeRangeSelect() {
     let select = makeSelect(selectOptions, "apiRangeButton", "Select time range");
     divAppend(select, "selects");
     select.addEventListener("change", function (e) {
-        console.log("Range set to: " + e.target.options[e.target.selectedIndex].text);
+        console.log("Selected: " + e.target.options[e.target.selectedIndex].text);
         makeCalendars(e.target);
     });
 }
@@ -57,7 +57,7 @@ function makeCalendars(selection) {
     if (selection.options[selection.selectedIndex].text == "Hourly") {
         document.getElementById("endCalendar").disabled = true;
     }
-    if(document.getElementById("buttons").innerHTML == ""){
+    if (document.getElementById("buttons").innerHTML == "") {
         constructSimpleButton("clearDates", "Clear");
         constructSimpleButton("submitDates", "Submit");
         document.getElementById("clearDates").addEventListener("click", () => clearButton());
@@ -92,7 +92,6 @@ function constructCalendar(id, selection) {
     if (selection == "Weekly") {
         let result = getWeekNumber(new Date());
         calendar.setAttribute("type", "week");
-        console.log("resault: " + result[0] + "-W" + result[1]);
         calendar.max = result[0] + "-W" + result[1];
     } else {
         let date = new Date();
@@ -122,22 +121,18 @@ function clearButton() {
 
 function checkAPIrequest(selection) {
     const range = selection.value
-    const corrections = {
-        "Weekly": (7 * 24 * 60 * 60 * 1000),
-        "Daily": (24 * 60 * 60 * 1000),
-        "Hourly": (24 * 60 * 60 * 1000)
-    };
     const select = selection.options[selection.selectedIndex].text;
+    if (select == "Hourly") {
+        setEndCalendar();               // Auto-completes disabled endCalendar
+    }
     let checkAPI = true;                // Turn false on problems
     let timeStamp;                      // The final timestamp for api call
     let timeStamps = [];                // Push calendars value here
-    let type = setType(select);         // calendar type
-    let fysm = getCrypto();
-    if(select = "Hourly"){
-        setEndCalendar();               // Auto-completes disabled endCalendar
-    }
+    const type = setType(select);         // calendar type
+    const fysm = getCrypto();             // Gets value from select
+    if (fysm == 0) checkAPI = false;    // default value in select is 0
     const calendars = document.querySelectorAll("input[type=" + type + "]");
-    if (calendars[0].value || calendars[0].valueAsNumber) {
+    if ((calendars[0].value || calendars[0].valueAsNumber) && (calendars[1].value || calendars[1].valueAsNumber)) {
         for (let i = 0; i < calendars.length; i++) {
             let date;
             if (type == "week") {
@@ -150,38 +145,31 @@ function checkAPIrequest(selection) {
     } else {
         checkAPI = false;
     }
-    if (fysm == 0) {
-        checkAPI = false;
-    }
     if (checkAPI) {
-        const correction = corrections[select] - 1; // -1 fpr Crypto API
-        console.log("correction: " + correction);
+        // Values to move timestaps to end of date
+        const corrections = {
+            "Weekly": (7 * 24 * 60 * 60 * 1000),
+            "Daily": (24 * 60 * 60 * 1000),
+            "Hourly": (24 * 60 * 60 * 1000)
+        };
+        const correction = corrections[select] - 1; // -1 Fix for CryptoComparesAPI
         const max = Math.max.apply(null, timeStamps) + correction;
         const min = Math.min.apply(null, timeStamps);
-        console.log("Date: " + new Date().getTime());
-        console.log("max: " + max);
-        console.log("min: " + min);
-        if (!max || !min) {
-            checkAPI = false;
-        }
-        let limit = Math.floor((max - min) / (1000 * range));
+        const limit = Math.floor((max - min) / (1000 * range));
         timeStamp = Math.floor(max / 1000);
         console.log("timeresolution: " + select)
         console.log("timestamp: " + timeStamp);
         console.log("limit: " + limit);
         console.log("fsym: " + fysm);
-
         makeApiCall(select, timeStamp, limit, fysm);
     } else {
         alert("Incomplete date or currency");
     }
 }
-
 function getCrypto() {
-    fysm = document.getElementById("currencySelect").value;
+    const fysm = document.getElementById("currencySelect").value;
     return fysm;
 }
-
 function setType(select) {
     let type;
     if (select == "Weekly") {

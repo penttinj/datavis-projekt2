@@ -87,8 +87,7 @@ function processData(json, timeResolution) {
     });
   };
 
-  console.log("processedDays", state.data);
-  console.log("xAxisTime", state.data[0].xAxisTime);
+  console.log("state data: ", state.data);
 }
 
 
@@ -96,7 +95,7 @@ function drawCanvas() {
   const margin = { top: 10, right: 30, bottom: 100, left: 60 },
     width = (window.innerWidth / 1.5) - margin.left - margin.right,
     height = (window.innerHeight / 1.5) - margin.top - margin.bottom;
-  const boxWidth = width / state.data.length - 5;
+  const boxWidth = (width / state.data.length - 5) > width / 10 ? width / 10 : (width / state.data.length - 5);
 
   // Ta bort föregående SVG om finns
   d3.select("svg").remove();
@@ -167,18 +166,41 @@ function drawCanvas() {
     .data(state.data)
     .enter()
     .append("line")
-    .attr("x1", function (d, i) { return (xScale(d.xAxisTime)) })
-    .attr("x2", function (d, i) { return (xScale(d.xAxisTime)) })
+    .attr("x1", function (d) { return (xScale(d.xAxisTime)) })
+    .attr("x2", function (d) { return (xScale(d.xAxisTime)) })
     .attr("y1", function (d) { return (yScale(d.min)) })
     .attr("y2", function (d) { return (yScale(d.max)) })
-    .attr("stroke", (d, i) => greenOrRed(d))
-    .style("width", 40);
+    .attr("stroke", (d) => greenOrRed(d));
+
+  boxplots
+    .selectAll("maxLines")
+    .data(state.data)
+    .enter()
+    .append("line")
+    .attr("x1", function (d) { return (xScale(d.xAxisTime) - boxWidth / 2) })
+    .attr("x2", function (d) { return (xScale(d.xAxisTime) + boxWidth / 2) })
+    .attr("y1", function (d) { return (yScale(d.max)) })
+    .attr("y2", function (d) { return (yScale(d.max)) })
+    .attr("stroke", (d) => greenOrRed(d));
+
+  boxplots
+    .selectAll("minLines")
+    .data(state.data)
+    .enter()
+    .append("line")
+    .attr("x1", function (d) { return (xScale(d.xAxisTime) - boxWidth / 2) })
+    .attr("x2", function (d) { return (xScale(d.xAxisTime) + boxWidth / 2) })
+    .attr("y1", function (d) { return (yScale(d.min)) })
+    .attr("y2", function (d) { return (yScale(d.min)) })
+    .attr("stroke", (d) => greenOrRed(d));
 
   boxplots
     .selectAll("boxes")
     .data(state.data)
     .enter()
     .append("rect")
+    .attr("rx", function (d) { return boxWidth < width / 10 ? 0 : 10 })
+    .attr("ry", function (d) { return boxWidth < width / 10 ? 0 : 10 })
     .attr("x", function (d, i) { return (xScale(d.xAxisTime) - boxWidth / 2) })
     .attr("y", function (d) { return (yScale(d.uq)) })
     .attr("height", function (d) { return (yScale(d.lq) - yScale(d.uq)) })
@@ -223,17 +245,17 @@ function drawCanvas() {
     .data(state.data)
     .enter()
     .append("line")
-    .attr("x1", function (d, i) { return (xScale(d.xAxisTime) - boxWidth / 2) })
-    .attr("x2", function (d, i) { return (xScale(d.xAxisTime) + boxWidth / 2) })
+    .attr("x1", function (d) { return (xScale(d.xAxisTime) - boxWidth / 2) })
+    .attr("x2", function (d) { return (xScale(d.xAxisTime) + boxWidth / 2) })
     .attr("y1", function (d) { return (yScale(d.median)) })
     .attr("y2", function (d) { return (yScale(d.median)) })
-    .attr("stroke", "black")
-    .style("width", 80);
+    .attr("stroke", "black");
 
   // Draw a line based on median
   const path = d3.line()
-    .x((d, i) => { return xScale(d.xAxisTime) })
-    .y((d, i) => { return yScale(d.median) })
+    .x((d) => { return xScale(d.xAxisTime) })
+    .y((d) => { return yScale(d.median) })
+    .curve(d3.curveLinear);
 
 
   var medianPath = chartGroup.append("g").attr("class", "path median");
@@ -243,20 +265,22 @@ function drawCanvas() {
     .attr("stroke", "black")
     .attr("stroke-width", "4")
     .attr("fill", "none")
-    .attr("d", path(state.data));
+    .attr("d", path(state.data))
+    .style("display","none");
   medianPath
     .append("path")
     .attr("class", "medianBorder")
     .attr("stroke", "cyan")
-    .attr("stroke-width", "3")
+    .attr("stroke-width", "2")
     .attr("fill", "none")
-    .attr("d", path(state.data));
+    .attr("d", path(state.data))
+    .style("display","none");
 
 
   // make just the 1 button
   if (!state.isDrawn) {
     const id = "pathShowHide";
-    constructSimpleButton(id, "Toggle");
+    constructSimpleButton(id, "Median Line");
     document.getElementById(id).addEventListener("click", medianShowHide);
   }
 
