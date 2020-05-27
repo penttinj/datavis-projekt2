@@ -4,12 +4,8 @@
   "description": "Visualisering av crypto växelkurser",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "gulp"
-  },
-    "scripts": {
     "gulp": "gulp"
   },
-  "repos
   "repository": {
     "type": "git",
     "url": "git+https://github.com/penttinj/datavis-projekt2.git"

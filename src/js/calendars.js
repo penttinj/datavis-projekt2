@@ -138,23 +138,30 @@ function checkAPIrequest(selection) {
             checkAPI = false;
         }
     }
+    console.log("timestamps[1]", timeStamps[1], "as date obj", new Date(timeStamps[1]));
     console.log("Range choosen: " + range);
     if (checkAPI) {
-        const max = Math.max.apply(null, timeStamps);
+        const correction = (range == 60) ? 0 : 86399000;
+        const max = Math.max.apply(null, timeStamps) + correction; // Lägger till 23h59m59s om daily
         const min = Math.min.apply(null, timeStamps);
         if (!max || !min) {
             checkAPI = false;
         }
         timeStamp = max;
-        if (type == "week") {
+        let limit = Math.floor((max - min) / (1000 * range));
+        if (select == "Weekly") {
             timeStamp += 1000 * 60 * 60 * 24 * 7; // Moves pointer to end of week
+            limit -= 1;                           // Fix: Goes over into next day
+        } else if (select == "Daily") {
+            timeStamp += 86399000;                // Moves pointer to end of day
+        } else if (select == "Hourly"){
+            limit -= 1;                           // Fix: Goes over into next day
         }
-        const limit = (max - min) / (1000 * range);
         console.log("timeresolution: " + select)
         console.log("timestamp: " + max);
         console.log("limit: " + limit);
         console.log("fsym: " + "btc");
 
-        makeApiCall(selection.options[selection.selectedIndex].text, max, limit, "btc");
+        makeApiCall(select, timeStamp, limit, "ETH");
     }
 }
