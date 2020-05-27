@@ -112,7 +112,7 @@ function drawCanvas() {
   const yScaleMax = d3.max(processedData, (d) => d.max);
 
   const yScale = d3.scaleLinear()
-    .domain([yScaleMin - 50, yScaleMax + 50])
+    .domain([yScaleMin, yScaleMax])
     .range([height, 0]);
   const xScale = d3.scaleBand()
     .range([0, width])
@@ -200,7 +200,7 @@ function drawCanvas() {
 
   // Draw a line based on median
   const path = d3.line()
-    .x((d, i) => { return xScale(d.startDate.toDateString()) })
+    .x((d, i) => { return xScale(d.xAxisTime) })
     .y((d, i) => { return yScale(d.median) })
     
 
