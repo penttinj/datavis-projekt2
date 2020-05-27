@@ -81,11 +81,11 @@ function processData(json, timeResolution) {
       endDate = new Date((day[day.length - 1].time * 1000)),
       open = day[0].open,
       close = day[day.length - 1].close;
-      let xAxisTime = startDate[timeProperty]();
+    let xAxisTime = startDate[timeProperty]();
 
-      if (timeResolution == "Hourly"){
-        xAxisTime += fixTimeOffset(xAxisTime, timeZoneOffset);
-      }
+    if (timeResolution == "Hourly") {
+      xAxisTime += fixTimeOffset(xAxisTime, timeZoneOffset);
+    }
 
     state.data.push({
       lq, median, uq, min, max, startDate, endDate, open, close, xAxisTime
@@ -187,6 +187,7 @@ function drawCanvas() {
     .attr("stroke", (d, i) => greenOrRed(d))
     .style("width", 40);
 
+  // Skapa boxarna
   boxplots
     .selectAll("boxes")
     .data(state.data)
@@ -199,36 +200,7 @@ function drawCanvas() {
     .attr("stroke", "black")
     .style("fill", (d, i) => greenOrRed(d));
 
-  // Create labels
-  const labels = chartGroup.append("g").attr("class", "labels");
-  labels.append("text")
-    .attr("class", "x")
-    .attr("transform",
-      "translate(" + (width / 2) + " ," +
-      (height + margin.bottom / 2) + ")")
-    .attr("font-family", "sans-serif")
-    .attr("font-size", "20")
-    .style("text-anchor", "middle")
-    .text(getXLabel(state.timeResolution));
-  labels.append("text")
-    .attr("class", "y")
-    .attr("transform", "rotate(-90)")
-    .attr("y", 0 - margin.left)
-    .attr("x", 0 - (height / 2))
-    .attr("dy", "1em")
-    .attr("font-family", "sans-serif")
-    .attr("font-size", "20")
-    .style("text-anchor", "middle")
-    .text("Price");
-  labels.append("text")
-    .attr("class", "tradingPair")
-    .attr("y", margin.top)
-    .attr("x", margin.left)
-    .attr("dy", "1em")
-    .attr("font-family", "sans-serif")
-    .attr("font-size", "10")
-    .style("text-anchor", "middle")
-    .text(`${state.tsym} - ${state.fsym}`);
+
 
   // Show the median
   boxplots
@@ -243,6 +215,41 @@ function drawCanvas() {
     .attr("stroke", "black")
     .style("width", 80);
 
+  // Create labels
+  const labels = chartGroup.append("g").attr("class", "labels");
+  // x axis label
+  labels.append("text")
+    .attr("class", "x")
+    .attr("transform",
+      "translate(" + (width / 2) + " ," +
+      (height + margin.bottom / 2) + ")")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20")
+    .style("text-anchor", "middle")
+    .text(getXLabel(state.timeResolution));
+  // y axis label
+  labels.append("text")
+    .attr("class", "y")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0 - margin.left)
+    .attr("x", 0 - (height / 2))
+    .attr("dy", "1em")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20")
+    .style("text-anchor", "middle")
+    .text(`Price (${state.tsym})`);
+  // trading pair label
+  labels.append("text")
+    .attr("class", "tradingPair")
+    .attr("y", margin.top)
+    .attr("x", margin.left)
+    .attr("dy", "1em")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "10")
+    .style("text-anchor", "middle")
+    .text(`${state.tsym} - ${state.fsym}`);
+
+  // LINEPATH
   // Draw a line based on median
   const path = d3.line()
     .x((d, i) => { return xScale(d.xAxisTime) })
