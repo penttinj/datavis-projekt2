@@ -138,9 +138,11 @@ function checkAPIrequest(selection) {
             checkAPI = false;
         }
     }
+    console.log("timestamps[1]", timeStamps[1], "as date obj", new Date(timeStamps[1]));
     console.log("Range choosen: " + range);
     if (checkAPI) {
-        const max = Math.max.apply(null, timeStamps);
+        const correction = (range == 60) ? 0 : 86399000;
+        const max = Math.max.apply(null, timeStamps) + correction; // Lägger till 23h59m59s om daily
         const min = Math.min.apply(null, timeStamps);
         if (!max || !min) {
             checkAPI = false;

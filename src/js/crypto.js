@@ -6,6 +6,7 @@ window.addEventListener("resize", (e) => {
 
 let processedData = [];
 let isDrawn = false;
+let timeResolutionGlobalState = "";
 
 function handleSubmit(e) {
   // dates här ska vara typ från kalendern
@@ -27,8 +28,13 @@ function checkInput() {
 
 function makeApiCall(timeResolution, timestamp, limit, fsym) {
   const apiKey = "ff8354bade31f78b01ddb5634247dc8f671875fd393a98fe2ee9306df95cd080";
-  const apiType = (timeResolution == "Weekly") ? "histoday" : "histohour";
-  d3.json(`https://min-api.cryptocompare.com/data/v2/${apiType}?fsym=${fsym}&tsym=eur&limit=${limit}&toTs=${timestamp / 1000}&aggregate=1&api_key=${apiKey}`).then((json) => {
+  const apiType = {
+    "Weekly": "histoday",
+    "Daily": "histohour",
+    "Hourly": "histominute"
+  }
+  console.log("URL", `https://min-api.cryptocompare.com/data/v2/${apiType[timeResolution]}?fsym=${fsym}&tsym=eur&limit=${limit}&toTs=${timestamp / 1000}&aggregate=1&api_key=${apiKey}`);
+  d3.json(`https://min-api.cryptocompare.com/data/v2/${apiType[timeResolution]}?fsym=${fsym}&tsym=eur&limit=${limit}&toTs=${timestamp / 1000}&aggregate=1&api_key=${apiKey}`).then((json) => {
     processData(json, timeResolution);
     drawCanvas();
   });
@@ -36,19 +42,26 @@ function makeApiCall(timeResolution, timestamp, limit, fsym) {
 }
 
 function processData(json, timeResolution) {
+  // töm föregående data och uppdatera global state vad timeres är
   processedData = [];
+  timeResolutionGlobalState = timeResolution;
+
   const data = json.Data.Data;
-  let dataPointRange = 24; // placeholder value until the UI works
+  let dataPointRange = undefined,
+    timeProperty = undefined;
 
   switch (timeResolution) {
-    case "hourly":
+    case "Hourly":
       dataPointRange = 60;
+      timeProperty = "getHours";
       break;
-    case "daily":
+    case "Daily":
       dataPointRange = 24;
+      timeProperty = "toDateString";
       break;
-    case "weekly":
+    case "Weekly":
       dataPointRange = 7;
+      timeProperty = "toDateString";
       break;
   }
 
@@ -63,14 +76,16 @@ function processData(json, timeResolution) {
       max = d3.max(highs),
       startDate = new Date((day[0].time * 1000)),
       endDate = new Date((day[day.length - 1].time * 1000)),
+      xAxisTime = startDate[timeProperty](), // xD can't believe this worked
       open = day[0].open,
       close = day[day.length - 1].close;
     processedData.push({
-      lq, median, uq, min, max, startDate, endDate, open, close
+      lq, median, uq, min, max, startDate, endDate, open, close, xAxisTime
     });
   };
 
   console.log("processedDays", processedData);
+  console.log("xAxisTime", processedData[0].xAxisTime);
 }
 
 
@@ -101,7 +116,7 @@ function drawCanvas() {
     .range([height, 0]);
   const xScale = d3.scaleBand()
     .range([0, width])
-    .domain(processedData.map((d) => d.startDate.toDateString()))
+    .domain(processedData.map((d) => d.xAxisTime))
     .paddingInner(1)
     .paddingOuter(.5)
 
@@ -123,7 +138,21 @@ function drawCanvas() {
     .attr("dy", ".35em")
     .attr("transform", "rotate(40)")
     .style("text-anchor", "start")
-    .html((d) => d.slice(4));
+    .html((d) => {
+      switch (timeResolutionGlobalState) {
+        case "Hourly":
+          /**
+           * TODO: Gör någåt smart sätt att korrigera timezone? Laga till UTC somehow bara kanske
+           */
+          return `${d}:00`;
+        case "Daily":
+          return d.slice(4);
+        case "Weekly":
+          return d;
+        default:
+          return d;
+      }
+    });
 
   // Visar y axis
   chartGroup.append("g").attr("class", "axis y").call(d3.axisLeft(yScale));
@@ -137,8 +166,8 @@ function drawCanvas() {
     .data(processedData)
     .enter()
     .append("line")
-    .attr("x1", function (d, i) { return (xScale(d.startDate.toDateString())) })
-    .attr("x2", function (d, i) { return (xScale(d.startDate.toDateString())) })
+    .attr("x1", function (d, i) { return (xScale(d.xAxisTime)) })
+    .attr("x2", function (d, i) { return (xScale(d.xAxisTime)) })
     .attr("y1", function (d) { return (yScale(d.min)) })
     .attr("y2", function (d) { return (yScale(d.max)) })
     .attr("stroke", (d, i) => greenOrRed(d))
@@ -149,7 +178,7 @@ function drawCanvas() {
     .data(processedData)
     .enter()
     .append("rect")
-    .attr("x", function (d, i) { return (xScale(d.startDate.toDateString()) - boxWidth / 2) })
+    .attr("x", function (d, i) { return (xScale(d.xAxisTime) - boxWidth / 2) })
     .attr("y", function (d) { return (yScale(d.uq)) })
     .attr("height", function (d) { return (yScale(d.lq) - yScale(d.uq)) })
     .attr("width", boxWidth)
@@ -162,8 +191,8 @@ function drawCanvas() {
     .data(processedData)
     .enter()
     .append("line")
-    .attr("x1", function (d, i) { return (xScale(d.startDate.toDateString()) - boxWidth / 2) })
-    .attr("x2", function (d, i) { return (xScale(d.startDate.toDateString()) + boxWidth / 2) })
+    .attr("x1", function (d, i) { return (xScale(d.xAxisTime) - boxWidth / 2) })
+    .attr("x2", function (d, i) { return (xScale(d.xAxisTime) + boxWidth / 2) })
     .attr("y1", function (d) { return (yScale(d.median)) })
     .attr("y2", function (d) { return (yScale(d.median)) })
     .attr("stroke", "black")
