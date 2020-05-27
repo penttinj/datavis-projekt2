@@ -1,12 +1,17 @@
 window.addEventListener("resize", (e) => {
-  if (isDrawn) {
+  if (state.isDrawn) {
     drawCanvas();
   }
 })
 
-let processedData = [];
-let isDrawn = false;
-let timeResolutionGlobalState = "";
+let state = {
+  "data": [],
+  "fsym": "",
+  "tsym": "EUR",
+  "isDrawn": false,
+  "timeResolution": ""
+};
+
 
 function handleSubmit(e) {
   // dates här ska vara typ från kalendern
@@ -20,12 +25,6 @@ function handleSubmit(e) {
 
 }
 
-function checkInput() {
-
-}
-
-
-
 function makeApiCall(timeResolution, timestamp, limit, fsym) {
   const apiKey = "ff8354bade31f78b01ddb5634247dc8f671875fd393a98fe2ee9306df95cd080";
   const apiType = {
@@ -33,6 +32,8 @@ function makeApiCall(timeResolution, timestamp, limit, fsym) {
     "Daily": "histohour",
     "Hourly": "histominute"
   }
+  state.fsym = fsym;
+
   console.log("URL", `https://min-api.cryptocompare.com/data/v2/${apiType[timeResolution]}?fsym=${fsym}&tsym=eur&limit=${limit}&toTs=${timestamp}&aggregate=1&api_key=${apiKey}`);
   d3.json(`https://min-api.cryptocompare.com/data/v2/${apiType[timeResolution]}?fsym=${fsym}&tsym=eur&limit=${limit}&toTs=${timestamp}&aggregate=1&api_key=${apiKey}`).then((json) => {
     processData(json, timeResolution);
@@ -42,18 +43,20 @@ function makeApiCall(timeResolution, timestamp, limit, fsym) {
 }
 
 function processData(json, timeResolution) {
-  // töm föregående data och uppdatera global state vad timeres är
-  processedData = [];
-  timeResolutionGlobalState = timeResolution;
+  // töm föregående data och uppdatera global state vad timeResolution är
+  state.data = [];
+  state.timeResolution = timeResolution;
 
-  const data = json.Data.Data;
+  const rawData = json.Data.Data;
   let dataPointRange = undefined,
-    timeProperty = undefined;
+    timeProperty = undefined,
+    timeZoneFix = 0;
 
   switch (timeResolution) {
     case "Hourly":
       dataPointRange = 60;
       timeProperty = "getHours";
+      timeZoneFix = (new Date().getTimezoneOffset()) / 60;
       break;
     case "Daily":
       dataPointRange = 24;
@@ -66,8 +69,8 @@ function processData(json, timeResolution) {
   }
 
   // Processa datan
-  for (let i = 0; i < data.length; i += dataPointRange) {
-    const day = data.slice(i, i + dataPointRange),
+  for (let i = 0; i < rawData.length; i += dataPointRange) {
+    const day = rawData.slice(i, i + dataPointRange),
       highs = day.map((v) => v.high).sort(d3.ascending),
       lq = d3.quantile(highs, .25),
       median = d3.median(highs),
@@ -76,24 +79,24 @@ function processData(json, timeResolution) {
       max = d3.max(highs),
       startDate = new Date((day[0].time * 1000)),
       endDate = new Date((day[day.length - 1].time * 1000)),
-      xAxisTime = startDate[timeProperty](), // xD can't believe this worked
+      xAxisTime = startDate[timeProperty]() + timeZoneFix,
       open = day[0].open,
       close = day[day.length - 1].close;
-    processedData.push({
+    state.data.push({
       lq, median, uq, min, max, startDate, endDate, open, close, xAxisTime
     });
   };
 
-  console.log("processedDays", processedData);
-  console.log("xAxisTime", processedData[0].xAxisTime);
+  console.log("processedDays", state.data);
+  console.log("xAxisTime", state.data[0].xAxisTime);
 }
 
 
 function drawCanvas() {
-  const margin = { top: 10, right: 30, bottom: 100, left: 40 },
+  const margin = { top: 10, right: 30, bottom: 100, left: 60 },
     width = (window.innerWidth / 1.5) - margin.left - margin.right,
     height = (window.innerHeight / 1.5) - margin.top - margin.bottom;
-  const boxWidth = width / processedData.length - 5;
+  const boxWidth = width / state.data.length - 5;
 
   // Ta bort föregående SVG om finns
   d3.select("svg").remove();
@@ -108,15 +111,16 @@ function drawCanvas() {
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
 
-  const yScaleMin = d3.min(processedData, (d) => d.min);
-  const yScaleMax = d3.max(processedData, (d) => d.max);
+  const yScaleMin = d3.min(state.data, (d) => d.min);
+  const yScaleMax = d3.max(state.data, (d) => d.max);
+  const scaleFactor = (yScaleMax - yScaleMin) * 0.2;
 
   const yScale = d3.scaleLinear()
-    .domain([yScaleMin, yScaleMax])
+    .domain([yScaleMin - scaleFactor, yScaleMax + scaleFactor])
     .range([height, 0]);
   const xScale = d3.scaleBand()
     .range([0, width])
-    .domain(processedData.map((d) => d.xAxisTime))
+    .domain(state.data.map((d) => d.xAxisTime))
     .paddingInner(1)
     .paddingOuter(.5)
 
@@ -139,11 +143,8 @@ function drawCanvas() {
     .attr("transform", "rotate(40)")
     .style("text-anchor", "start")
     .html((d) => {
-      switch (timeResolutionGlobalState) {
+      switch (state.timeResolution) {
         case "Hourly":
-          /**
-           * TODO: Gör någåt smart sätt att korrigera timezone? Laga till UTC somehow bara kanske
-           */
           return `${d}:00`;
         case "Daily":
           return d.slice(4);
@@ -163,7 +164,7 @@ function drawCanvas() {
   // Show the main vertical line
   boxplots
     .selectAll("vertLines")
-    .data(processedData)
+    .data(state.data)
     .enter()
     .append("line")
     .attr("x1", function (d, i) { return (xScale(d.xAxisTime)) })
@@ -175,7 +176,7 @@ function drawCanvas() {
 
   boxplots
     .selectAll("boxes")
-    .data(processedData)
+    .data(state.data)
     .enter()
     .append("rect")
     .attr("x", function (d, i) { return (xScale(d.xAxisTime) - boxWidth / 2) })
@@ -185,10 +186,41 @@ function drawCanvas() {
     .attr("stroke", "black")
     .style("fill", (d, i) => greenOrRed(d));
 
+  // Create labels
+  const labels = chartGroup.append("g").attr("class", "labels");
+  labels.append("text")
+    .attr("class", "x")
+    .attr("transform",
+      "translate(" + (width / 2) + " ," +
+      (height + margin.bottom / 2) + ")")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20")
+    .style("text-anchor", "middle")
+    .text(getXLabel(state.timeResolution));
+  labels.append("text")
+    .attr("class", "y")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0 - margin.left)
+    .attr("x", 0 - (height / 2))
+    .attr("dy", "1em")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "20")
+    .style("text-anchor", "middle")
+    .text("Price");
+  labels.append("text")
+    .attr("class", "tradingPair")
+    .attr("y", margin.top)
+    .attr("x", margin.left)
+    .attr("dy", "1em")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", "10")
+    .style("text-anchor", "middle")
+    .text(`${state.tsym} - ${state.fsym}`);
+
   // Show the median
   boxplots
     .selectAll("medianLines")
-    .data(processedData)
+    .data(state.data)
     .enter()
     .append("line")
     .attr("x1", function (d, i) { return (xScale(d.xAxisTime) - boxWidth / 2) })
@@ -202,7 +234,7 @@ function drawCanvas() {
   const path = d3.line()
     .x((d, i) => { return xScale(d.xAxisTime) })
     .y((d, i) => { return yScale(d.median) })
-    
+
 
   var medianPath = chartGroup.append("g").attr("class", "path median");
   medianPath
@@ -211,25 +243,25 @@ function drawCanvas() {
     .attr("stroke", "black")
     .attr("stroke-width", "4")
     .attr("fill", "none")
-    .attr("d", path(processedData));
+    .attr("d", path(state.data));
   medianPath
     .append("path")
     .attr("class", "medianPath")
     .attr("stroke", "cyan")
     .attr("stroke-width", "3")
     .attr("fill", "none")
-    .attr("d", path(processedData));
+    .attr("d", path(state.data));
 
 
   // make just the 1 button
-  if (!isDrawn) {
+  if (!state.isDrawn) {
     const id = "pathShowHide";
     constructSimpleButton(id, "Toggle");
     document.getElementById(id).addEventListener("click", medianShowHide);
   }
 
   // Set global boolean to true for on.window.resize
-  isDrawn = true;
+  state.isDrawn = true;
   function greenOrRed(d) {
     if (d.close > d.open) return "green"
     else return "red"
@@ -244,6 +276,17 @@ function drawCanvas() {
       document.getElementsByClassName("medianPath")[0].style.display = "none";
       document.getElementsByClassName("medianPath")[1].style.display = "none";
     }
+  }
+}
+
+function getXLabel(timeResolution) {
+  switch (timeResolution) {
+    case "Weekly":
+      return "Weeks"
+    case "Daily":
+      return "Days"
+    case "Hourly":
+      return "Hours(UTC)"
   }
 }
 
