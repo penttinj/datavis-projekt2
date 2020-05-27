@@ -4,8 +4,9 @@ function makeRangeSelect() {
         "Daily": 60 * 60,
         "Hourly": 60
     };
-
-    const select = document.createElement("select");
+    let select = makeSelect(selectOptions, "apiRangeButton", "Select time range");
+    divAppend(select, "selects");
+    /*const select = document.createElement("select");
     select.id = "apiRangeButton";
     divAppend(select, "selects");
     let option = document.createElement("option");
@@ -19,11 +20,49 @@ function makeRangeSelect() {
         option.value = selectOptions[key];
         option.text = key;
         select.appendChild(option);
-    });
+    });*/
     select.addEventListener("change", function (e) {
         console.log("Range set to: " + e.target.options[e.target.selectedIndex].text);
         makeCalendars(e.target);
     });
+}
+
+function makeCurrencySelect(){
+    const currencies = {
+        "Bitcoin":"BTC",
+        "Ethereum":"ETH",
+        "XRP":"XRP",
+        "Bitcoin Cash":"BCH",
+        "Ethereum Classic":"ETC",
+        "EOS":"EOS",
+        "Bitcoin SV":"BSV",
+        "TRON":"TRX",
+        "Chainlink":"Link",
+        "OmiseGo":"OMG",
+        "NEO":"NEO",
+        "Dash":"DASH"        
+    };
+    let select = makeSelect(currencies, "currencySelect", "Select Crypto Currency");
+    divAppend(select, "selects");
+}
+
+function makeSelect(obj, id, msg = "Please Select"){
+    const select = document.createElement("select");
+    select.id = id;
+    divAppend(select, "selects");
+    let option = document.createElement("option");
+    option.disabled = true;
+    option.selected = true;
+    option.value = 0;
+    option.text = msg;
+    select.appendChild(option);
+    Object.keys(obj).forEach(key => {
+        option = document.createElement("option");
+        option.value = obj[key];
+        option.text = key;
+        select.appendChild(option);
+    });
+    return select;
 }
 
 function makeCalendars(selection) {
@@ -106,15 +145,7 @@ function checkAPIrequest(selection) {
     let timeStamp;                      // The final timestamp for api call
     let timeStamps = [];                // Push calendars value here
     let type = setType(select);         // calendar type
-    if (select == "Weekly") {
-        type = "week";
-    } else {
-        type = "date";
-    }
-    if (select == "Hourly") {
-        let date = new Date(document.getElementById("startCalendar").value);
-        document.getElementById("endCalendar").value = new Date(date).toISOString().split("T")[0];
-    }
+    let fysm = getCrypto();
     const calendars = document.querySelectorAll("input[type=" + type + "]");
     for (let i = 0; i < calendars.length; i++) {
         if (calendars[i].value || calendars[i].valueAsNumber) {
@@ -126,12 +157,14 @@ function checkAPIrequest(selection) {
             }
             timeStamps.push(date.getTime());
         } else {
-            console.log("A value was empty");
+            alert("Incomplete date or dates");
             checkAPI = false;
         }
     }
-    console.log("timestamps[1]", timeStamps[1], "as date obj", new Date(timeStamps[1]));
-    console.log("Range choosen: " + range);
+    if(fysm == 0){
+        alert("Pick a Crypt Currency");
+        checkAPI = false;
+    }
     if (checkAPI) {
         const correction = corrections[select] - 1; // -1 fpr Crypto API
         console.log("correction: " + correction);
@@ -148,10 +181,15 @@ function checkAPIrequest(selection) {
         console.log("timeresolution: " + select)
         console.log("timestamp: " + timeStamp);
         console.log("limit: " + limit);
-        console.log("fsym: " + "btc");
+        console.log("fsym: " + fysm);
 
-        makeApiCall(select, timeStamp, limit, "ETH");
+        makeApiCall(select, timeStamp, limit, fysm);
     }
+}
+
+function getCrypto(){
+    fysm = document.getElementById("currencySelect").value;
+    return fysm;
 }
 
 function setType(select) {
@@ -163,11 +201,15 @@ function setType(select) {
     }
     else if (select == "Hourly") {
         type = "date";
-        setEndCalendar();
+        setEndCalendar();       //Set value of endCalendar if hourly
     }
     return type;
 }
 function setEndCalendar() {
-    let date = new Date(document.getElementById("startCalendar").value);
-    document.getElementById("endCalendar").value = new Date(date).toISOString().split("T")[0];
+    if(document.getElementById("startCalendar").value){
+        let date = new Date(document.getElementById("startCalendar").value);
+        document.getElementById("endCalendar").value = new Date(date).toISOString().split("T")[0];
+    } else {
+        alert("Incomplete date or dates");
+    }
 }

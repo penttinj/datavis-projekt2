@@ -291,3 +291,4 @@ function getXLabel(timeResolution) {
 }
 
 makeRangeSelect();
+makeCurrencySelect();
