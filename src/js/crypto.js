@@ -36,6 +36,7 @@ function makeApiCall(timeResolution, timestamp, limit, fsym) {
 }
 
 function processData(json, timeResolution) {
+  processedData = [];
   const data = json.Data.Data;
   let dataPointRange = 24; // placeholder value until the UI works
 
@@ -104,9 +105,6 @@ function drawCanvas() {
     .paddingInner(1)
     .paddingOuter(.5)
 
-  const xScaleMedian = d3.scaleLinear()
-    .range([0, width])
-    .domain([0, processedData.length]);
 
   const chartGroup = svg
     .append("g")
@@ -173,9 +171,9 @@ function drawCanvas() {
 
   // Draw a line based on median
   const path = d3.line()
-    .x((d, i) => { return xScaleMedian(i) })
+    .x((d, i) => { return xScale(d.startDate.toDateString()) })
     .y((d, i) => { return yScale(d.median) })
-    .curve(d3.curveCardinal);
+    
 
   var medianPath = chartGroup.append("g").attr("class", "path median");
   medianPath
