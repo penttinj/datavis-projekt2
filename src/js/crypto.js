@@ -50,13 +50,13 @@ function processData(json, timeResolution) {
   const rawData = json.Data.Data;
   let dataPointRange = undefined,
     timeProperty = undefined,
-    timeZoneFix = 0;
+    timeZoneOffset = 0;
 
   switch (timeResolution) {
     case "Hourly":
       dataPointRange = 60;
       timeProperty = "getHours";
-      timeZoneFix = (new Date().getTimezoneOffset()) / 60;
+      timeZoneOffset = (new Date().getTimezoneOffset()) / 60;
       break;
     case "Daily":
       dataPointRange = 24;
@@ -79,18 +79,31 @@ function processData(json, timeResolution) {
       max = d3.max(highs),
       startDate = new Date((day[0].time * 1000)),
       endDate = new Date((day[day.length - 1].time * 1000)),
-      xAxisTime = startDate[timeProperty]() + timeZoneFix,
       open = day[0].open,
       close = day[day.length - 1].close;
+      let xAxisTime = startDate[timeProperty]();
+
+      if (timeResolution == "Hourly"){
+        xAxisTime += fixTimeOffset(xAxisTime, timeZoneOffset);
+      }
+
     state.data.push({
       lq, median, uq, min, max, startDate, endDate, open, close, xAxisTime
     });
   };
 
   console.log("processedDays", state.data);
-  console.log("xAxisTime", state.data[0].xAxisTime);
 }
 
+function fixTimeOffset(time, offset) {
+  if (offset !== 0) {
+    if (time + offset < 0) {
+      return offset + 24;
+    } else {
+      return offset;
+    }
+  }
+}
 
 function drawCanvas() {
   const margin = { top: 10, right: 30, bottom: 100, left: 60 },
