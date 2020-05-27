@@ -13,18 +13,6 @@ let state = {
 };
 
 
-function handleSubmit(e) {
-  // dates här ska vara typ från kalendern
-  let startDate = new Date("January 31 2020 00:00"),
-    endDate = new Date("February 2 2020 12:30"),
-    timeResolution,
-    fsym;
-
-  checkInput();
-  makeApiCall("daily", "timestamp", 839, "btc");
-
-}
-
 function makeApiCall(timeResolution, timestamp, limit, fsym) {
   const apiKey = "ff8354bade31f78b01ddb5634247dc8f671875fd393a98fe2ee9306df95cd080";
   const apiType = {
@@ -221,9 +209,10 @@ function drawCanvas() {
     .attr("height", function (d) { return (yScale(d.lq) - yScale(d.uq)) })
     .attr("width", boxWidth)
     .attr("stroke", "black")
-    .style("fill", (d, i) => greenOrRed(d));
-
-
+    .style("fill", (d, i) => greenOrRed(d))
+    .on('mouseover', overHandler)
+    .on('mouseout', outHandler)
+    .on("mousemove", moveHandler);
 
   // Show the median
   boxplots
@@ -236,7 +225,7 @@ function drawCanvas() {
     .attr("y1", function (d) { return (yScale(d.median)) })
     .attr("y2", function (d) { return (yScale(d.median)) })
     .attr("stroke", "black")
-    .style("width", 80);
+    .style("pointer-events", "none");
 
   // Create labels
   const labels = chartGroup.append("g").attr("class", "labels");
@@ -272,17 +261,51 @@ function drawCanvas() {
     .style("text-anchor", "middle")
     .text(`${state.tsym} - ${state.fsym}`);
 
-  // Show the median
-  boxplots
-    .selectAll("medianLines")
-    .data(state.data)
-    .enter()
-    .append("line")
-    .attr("x1", function (d) { return (xScale(d.xAxisTime) - boxWidth / 2) })
-    .attr("x2", function (d) { return (xScale(d.xAxisTime) + boxWidth / 2) })
-    .attr("y1", function (d) { return (yScale(d.median)) })
-    .attr("y2", function (d) { return (yScale(d.median)) })
-    .attr("stroke", "black");
+  // Mouseover funktionalitet
+  if (document.querySelectorAll(".tooltip").length == 0) {
+    d3.select("body")
+      .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("font-size", "16px")
+      .style("position", "absolute");
+  }
+  let tooltip = d3.select(".tooltip");
+
+  function overHandler(ev) {
+    let mouseY = d3.event.pageY - document.querySelector("body").getBoundingClientRect().y + 10;
+    let mouseX = d3.event.pageX - document.querySelector("body").getBoundingClientRect().x + 10;
+
+    tooltip
+      .transition()
+      .duration(200)
+      .style("opacity", 1)
+    tooltip
+      .html(
+        "<span style='color:grey'>Max: </span>" + ev.max + "<br>" +
+        "<span style='color:grey'>Min: </span>" + ev.min + "<br>" +
+        "<span style='color:grey'>Uq: </span>" + ev.uq + "<br>" +
+        "<span style='color:grey'>Median: </span>" + ev.median + "<br>" +
+        "<span style='color:grey'>Lq: </span>" + ev.lq + "<br>"
+      )
+      .style("left", mouseX)
+      .style("top", mouseY)
+  };
+  function outHandler(ev) {
+    tooltip
+      .transition()
+      .duration(200)
+      .style("opacity", 0)
+  };
+
+  function moveHandler(ev) {
+    let mouseY = d3.event.pageY - document.querySelector("body").getBoundingClientRect().y + 10;
+    let mouseX = d3.event.pageX - document.querySelector("body").getBoundingClientRect().x + 10;
+    tooltip
+      .style("left", (mouseX + 30) + "px")
+      .style("top", (mouseY + 30) + "px")
+  }
+
 
   // Draw a line based on median
   const path = d3.line()
@@ -299,7 +322,7 @@ function drawCanvas() {
     .attr("stroke-width", "4")
     .attr("fill", "none")
     .attr("d", path(state.data))
-    .style("display","none");
+    .style("display", "none");
   medianPath
     .append("path")
     .attr("class", "medianBorder")
@@ -307,7 +330,7 @@ function drawCanvas() {
     .attr("stroke-width", "2")
     .attr("fill", "none")
     .attr("d", path(state.data))
-    .style("display","none");
+    .style("display", "none");
 
 
   // make just the 1 button
