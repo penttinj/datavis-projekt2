@@ -160,8 +160,8 @@ function checkAPIrequest(selection) {
         if (!max || !min) {
             checkAPI = false;
         }
+        let limit = Math.floor((max - min) / (1000 * range));
         timeStamp = Math.floor(max/1000);
-        let limit = Math.floor((timeStamp - min) / (1000 * range));
         /*if (select == "Weekly") {
             timeStamp += 1000 * 60 * 60 * 24 * 7; // Moves pointer to end of week
             limit -= 1;                           // Fix: Goes over into next day
