@@ -98,6 +98,8 @@ function constructCalendar(id, selection) {
         date.setHours(0, 0, 0, 0);    //Midnatt
         calendar.setAttribute("type", "date");
         calendar.max = new Date(date).toISOString().split("T")[0];
+        // Apin lagrar bara 7 dagar bakåt minutdata så hourly kalender måste få en limit
+        if (selection == "Hourly") calendar.min = new Date(date.getTime() - 432000000).toISOString().split("T")[0]
     }
     calendar.setAttribute("id", id);
     divAppend(calendar, "calendarsDiv");
