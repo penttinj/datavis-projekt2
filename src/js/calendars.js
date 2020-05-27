@@ -40,21 +40,6 @@ function makeCalendars(selection) {
     document.getElementById("submitDates").addEventListener("click", () => checkAPIrequest(selection));
 }
 
-function updateCalendars(target, selection) {
-    let date = new Date(target.value);
-    const dateLimits = {
-        "Weekly": 7,
-        "Daily": 1,
-        "Hourly": 24 * 60 * 60 * 1000
-    };
-    console.log("as date: " + target.valueAsDate);
-    console.log("as number: " + target.valueAsNumber);
-    if (selection == "Hourly") {
-        date.setTime(date.getTime() + dateLimits[selection]);
-        document.getElementById("endCalendar").value = new Date(date).toISOString().split("T")[0];
-    }
-}
-
 function constructCalendar(id, selection) {
     const calendar = document.createElement("input");
     if (selection == "Weekly") {
@@ -69,7 +54,6 @@ function constructCalendar(id, selection) {
         calendar.max = new Date(date).toISOString().split("T")[0];
     }
     calendar.setAttribute("id", id);
-    calendar.addEventListener("change", (e) => updateCalendars(e.target, selection));
     divAppend(calendar);
 }
 
@@ -113,15 +97,24 @@ function clearCalendars() {
 
 function checkAPIrequest(selection) {
     const range = selection.value
+    const corrections = {
+        "Weekly": (7 * 24 * 60 * 60 * 1000),
+        "Daily": (24 * 60 * 60 * 1000),
+        "Hourly": (24 * 60 * 60 * 1000)
+    };
     const select = selection.options[selection.selectedIndex].text;
-    let checkAPI = true;    // Turn false on problems
-    let timeStamp;          // The final timestamp for api call
-    let timeStamps = [];    // Push calendars value here
-    let type = "";          // calendar type
+    let checkAPI = true;                // Turn false on problems
+    let timeStamp;                      // The final timestamp for api call
+    let timeStamps = [];                // Push calendars value here
+    let type = setType(select);         // calendar type
     if (select == "Weekly") {
         type = "week";
     } else {
         type = "date";
+    }
+    if (select == "Hourly") {
+        let date = new Date(document.getElementById("startCalendar").value);
+        document.getElementById("endCalendar").value = new Date(date).toISOString().split("T")[0];
     }
     const calendars = document.querySelectorAll("input[type=" + type + "]");
     for (let i = 0; i < calendars.length; i++) {
@@ -141,27 +134,41 @@ function checkAPIrequest(selection) {
     console.log("timestamps[1]", timeStamps[1], "as date obj", new Date(timeStamps[1]));
     console.log("Range choosen: " + range);
     if (checkAPI) {
-        const correction = (range == 60) ? 0 : 86399000;
-        const max = Math.max.apply(null, timeStamps) + correction; // Lägger till 23h59m59s om daily
+        const correction = corrections[select] - 1; // -1 fpr Crypto API
+        console.log("correction: " + correction);
+        const max = Math.max.apply(null, timeStamps) + correction;
         const min = Math.min.apply(null, timeStamps);
+        console.log("Date: " + new Date().getTime());
+        console.log("max: " + max);
+        console.log("min: " + min);
         if (!max || !min) {
             checkAPI = false;
         }
-        timeStamp = max;
         let limit = Math.floor((max - min) / (1000 * range));
-        if (select == "Weekly") {
-            timeStamp += 1000 * 60 * 60 * 24 * 7; // Moves pointer to end of week
-            limit -= 1;                           // Fix: Goes over into next day
-        } else if (select == "Daily") {
-            timeStamp += 86399000;                // Moves pointer to end of day
-        } else if (select == "Hourly"){
-            limit -= 1;                           // Fix: Goes over into next day
-        }
+        timeStamp = Math.floor(max / 1000);
         console.log("timeresolution: " + select)
-        console.log("timestamp: " + max);
+        console.log("timestamp: " + timeStamp);
         console.log("limit: " + limit);
         console.log("fsym: " + "btc");
 
         makeApiCall(select, timeStamp, limit, "ETH");
     }
+}
+
+function setType(select) {
+    let type;
+    if (select == "Weekly") {
+        type = "week";
+    } else if (select == "Daily") {
+        type = "date";
+    }
+    else if (select == "Hourly") {
+        type = "date";
+        setEndCalendar();
+    }
+    return type;
+}
+function setEndCalendar() {
+    let date = new Date(document.getElementById("startCalendar").value);
+    document.getElementById("endCalendar").value = new Date(date).toISOString().split("T")[0];
 }
