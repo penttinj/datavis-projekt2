@@ -187,7 +187,7 @@ function drawCanvas() {
     .attr("d", path(processedData));
   medianPath
     .append("path")
-    .attr("class", "medianPath")
+    .attr("class", "medianBorder")
     .attr("stroke", "cyan")
     .attr("stroke-width", "3")
     .attr("fill", "none")
@@ -212,10 +212,10 @@ function drawCanvas() {
     const style = document.getElementsByClassName("medianPath")[0].style.display;
     if (style === "none") {
       document.getElementsByClassName("medianPath")[0].style.display = "block";
-      document.getElementsByClassName("medianPath")[1].style.display = "block";
+      document.getElementsByClassName("medianBorder")[0].style.display = "block";
     } else {
       document.getElementsByClassName("medianPath")[0].style.display = "none";
-      document.getElementsByClassName("medianPath")[1].style.display = "none";
+      document.getElementsByClassName("medianBorder")[0].style.display = "none";
     }
   }
 }
