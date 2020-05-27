@@ -111,7 +111,7 @@ function divAppend(child, id) {
 
 function clearButton() {
     document.getElementById("currencySelect").value = 0;
-    var calendars = document.querySelectorAll("input[type=date]");
+    var calendars = document.querySelectorAll("input[type=date], input[type=week]");
     calendars.forEach(element => {
         element.value = "";
         var date = new Date();
