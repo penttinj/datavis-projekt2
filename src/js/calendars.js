@@ -148,15 +148,17 @@ function checkAPIrequest(selection) {
             checkAPI = false;
         }
         timeStamp = max;
-        if (type == "week") {
+        if (select == "Weekly") {
             timeStamp += 1000 * 60 * 60 * 24 * 7; // Moves pointer to end of week
+        } else if (select == "Daily") {
+            timeStamp += 86399000; // Moves pointer to end of day
         }
-        const limit = (max - min) / (1000 * range);
+        const limit = Math.floor((max - min) / (1000 * range));
         console.log("timeresolution: " + select)
         console.log("timestamp: " + max);
         console.log("limit: " + limit);
         console.log("fsym: " + "btc");
 
-        makeApiCall(selection.options[selection.selectedIndex].text, max, limit, "btc");
+        makeApiCall(select, max, limit, "btc");
     }
 }
