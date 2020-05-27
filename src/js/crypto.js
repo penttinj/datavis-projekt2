@@ -289,6 +289,3 @@ function getXLabel(timeResolution) {
       return "Hours(UTC)"
   }
 }
-
-makeRangeSelect();
-makeCurrencySelect();
