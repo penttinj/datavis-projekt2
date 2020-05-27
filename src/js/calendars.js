@@ -151,16 +151,17 @@ function checkAPIrequest(selection) {
         let limit = Math.floor((max - min) / (1000 * range));
         if (select == "Weekly") {
             timeStamp += 1000 * 60 * 60 * 24 * 7; // Moves pointer to end of week
+            limit -= 1;                           // Fix: Goes over into next day
         } else if (select == "Daily") {
-            timeStamp += 86399000; // Moves pointer to end of day
+            timeStamp += 86399000;                // Moves pointer to end of day
         } else if (select == "Hourly"){
-            limit -= 1;
+            limit -= 1;                           // Fix: Goes over into next day
         }
         console.log("timeresolution: " + select)
         console.log("timestamp: " + max);
         console.log("limit: " + limit);
         console.log("fsym: " + "btc");
 
-        makeApiCall(select, max, limit, "ETH");
+        makeApiCall(select, timeStamp, limit, "ETH");
     }
 }
