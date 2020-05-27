@@ -116,7 +116,7 @@ function drawCanvas() {
 
   // Visar x axis
   const xAxis = chartGroup.append("g")
-    .attr("class","axis x")
+    .attr("class", "axis x")
     .attr("transform", "translate(0," + height + ")")
     .call(d3.axisBottom(xScale))
     .selectAll("text")
@@ -128,10 +128,10 @@ function drawCanvas() {
     .html((d) => d.slice(4));
 
   // Visar y axis
-  chartGroup.append("g").attr("class","axis y").call(d3.axisLeft(yScale));
+  chartGroup.append("g").attr("class", "axis y").call(d3.axisLeft(yScale));
 
   // Grupp för boxplots
-  const boxplots = chartGroup.append("g").attr("class","boxplots");
+  const boxplots = chartGroup.append("g").attr("id", "boxplots");
 
   // Show the main vertical line
   boxplots
@@ -180,14 +180,22 @@ function drawCanvas() {
   var medianPath = chartGroup.append("g").attr("class", "path median");
   medianPath
     .append("path")
-    .attr("id", "medianPath")
+    .attr("class", "medianPath")
+    .attr("stroke", "black")
+    .attr("stroke-width", "4")
+    .attr("fill", "none")
+    .attr("d", path(processedData));
+  medianPath
+    .append("path")
+    .attr("class", "medianPath")
     .attr("stroke", "cyan")
     .attr("stroke-width", "3")
     .attr("fill", "none")
     .attr("d", path(processedData));
 
-    // make just the 1 button
-  if(!isDrawn){
+
+  // make just the 1 button
+  if (!isDrawn) {
     const id = "pathShowHide";
     constructSimpleButton(id, "Toggle");
     document.getElementById(id).addEventListener("click", medianShowHide);
@@ -200,14 +208,15 @@ function drawCanvas() {
     else return "red"
   }
 
-  function medianShowHide(){
-    const style = document.getElementById("medianPath").style.display;
-    if(style === "none"){
-      document.getElementById("medianPath").style.display = "block";
-    } else{
-      document.getElementById("medianPath").style.display = "none";
+  function medianShowHide() {
+    const style = document.getElementsByClassName("medianPath")[0].style.display;
+    if (style === "none") {
+      document.getElementsByClassName("medianPath")[0].style.display = "block";
+      document.getElementsByClassName("medianPath")[1].style.display = "block";
+    } else {
+      document.getElementsByClassName("medianPath")[0].style.display = "none";
+      document.getElementsByClassName("medianPath")[1].style.display = "none";
     }
-    
   }
 }
 
