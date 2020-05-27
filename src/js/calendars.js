@@ -148,12 +148,14 @@ function checkAPIrequest(selection) {
             checkAPI = false;
         }
         timeStamp = max;
+        let limit = Math.floor((max - min) / (1000 * range));
         if (select == "Weekly") {
             timeStamp += 1000 * 60 * 60 * 24 * 7; // Moves pointer to end of week
         } else if (select == "Daily") {
             timeStamp += 86399000; // Moves pointer to end of day
+        } else if (select == "Hourly"){
+            limit -= 1;
         }
-        const limit = Math.floor((max - min) / (1000 * range));
         console.log("timeresolution: " + select)
         console.log("timestamp: " + max);
         console.log("limit: " + limit);
