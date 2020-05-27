@@ -4,6 +4,7 @@ button, input, select {
     height: 40px;
     border: none;
     outline: none;
+    margin:5px;
     color: rgb(0, 0, 0);
     background: rgb(255, 255, 255);
     cursor: pointer;
