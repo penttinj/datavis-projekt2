@@ -11,10 +11,11 @@ Bygg sedan en webbsida som använder webbtjänsten på följande vis:
 2. Lådagram som beskriver spridningen/variationen av varje vald valutas växelkurs undertidsintervallet.
 
 Tips: För att läsa data från en webbtjänst i JavaScript kan du använda JQuery.js bibilioteketoch funktionen getJSON():
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>$.get("https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD,JPY,EUR ", function(data, status){ 
+```
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>"$.get("https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD,JPY,EUR ", function(data, status){ 
     //variabeln data innehåller här JSON-filen som returneras från webbtjänsten
 });
-    
+```
 Tips: Om cryptonator känns som en svår API att börja med, använd Cryptonator för att få ettlätt JSON svar utan API nyckel - ​https://api.cryptonator.com/api/ticker/btc-usdExaminationskrav
 
 Ladda upp på Itslearning före deadline:
@@ -26,11 +27,16 @@ Ladda upp på Itslearning före deadline:
 
 
 ## Preview
-[![Image of thesourmango](https://github.com/thesourmango.png?size=200)](https://github.com/thesourmango)
-
+![Preview Image](/preview.gif)
 
 ## Contribution
 School project, probably won't be updated but constructive criticism is welcome.
+
+## Getting started
+Requires Node version 11.
+1. Clone project
+2. Install dependencies `npm install`
+3. Run dev server `npm run gulp` - Listens on port `3000`
 
 ## Contributors
 
