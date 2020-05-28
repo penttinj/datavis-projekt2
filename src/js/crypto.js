@@ -20,13 +20,21 @@ function makeApiCall(timeResolution, timestamp, limit, fsym) {
     "Daily": "histohour",
     "Hourly": "histominute"
   }
+  const url = `https://min-api.cryptocompare.com/data/v2/${apiType[timeResolution]}?fsym=${fsym}` +
+  `&tsym=eur&limit=${limit}&toTs=${timestamp}&aggregate=1&api_key=${apiKey}`
   state.fsym = fsym;
 
-  console.log("URL", `https://min-api.cryptocompare.com/data/v2/${apiType[timeResolution]}?fsym=${fsym}&tsym=eur&limit=${limit}&toTs=${timestamp}&aggregate=1&api_key=${apiKey}`);
-  d3.json(`https://min-api.cryptocompare.com/data/v2/${apiType[timeResolution]}?fsym=${fsym}&tsym=eur&limit=${limit}&toTs=${timestamp}&aggregate=1&api_key=${apiKey}`).then((json) => {
+  console.log("URL", url);
+  d3.json(url).then((json) => {
+    if (json.Response == "Error") throw new Error(json.Message);
     processData(json, timeResolution);
     drawCanvas();
-  });
+  })
+    .catch((e) => {
+      console.log("Error with api call");
+      console.log(e);
+      alert("An error happened with the request!")
+    });
 
 }
 
