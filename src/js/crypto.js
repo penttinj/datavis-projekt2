@@ -265,7 +265,8 @@ function drawCanvas() {
   if (document.querySelectorAll(".tooltip").length == 0) {
     d3.select("body")
       .append("div")
-      .style("opacity", 0)
+      .style("opacity", 1)
+      .style("display", "none")
       .attr("class", "tooltip")
       .style("font-size", "16px")
       .style("position", "absolute");
@@ -280,6 +281,7 @@ function drawCanvas() {
       .transition()
       .duration(200)
       .style("opacity", 1)
+      .style("display", "block")
     tooltip
       .html(
         "<span style='color:grey'>Max: </span>" + ev.max + "<br>" +
@@ -296,6 +298,7 @@ function drawCanvas() {
       .transition()
       .duration(200)
       .style("opacity", 0)
+      .style("display", "none")
   };
 
   function moveHandler(ev) {
